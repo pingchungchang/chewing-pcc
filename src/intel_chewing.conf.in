@@ -1,0 +1,14 @@
+[InputMethod]
+# Translatable name of the input method
+Name=intel_chewing
+# Icon name
+Icon=fcitx-intel_chewing
+# A short label that present the name of input method
+Label=P
+# ISO 639 language code
+LangCode=zh_TW
+# Match addon name
+Addon=intel_chewing
+# Whether this input method support customization
+# Configurable=True
+
