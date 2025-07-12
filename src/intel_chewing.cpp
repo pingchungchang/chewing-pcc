@@ -99,6 +99,8 @@ public:
         }
         auto *state = ic_->propertyFor(engine_->factory());
 		chewing_handle_PageUp(state -> getChewing());
+		cursor_ = 0;
+		setCursorIndex(cursor_);
 		generate();
     }
     void next() override {
@@ -108,6 +110,8 @@ public:
         }
         auto *state = ic_->propertyFor(engine_->factory());
 		chewing_handle_Down(state -> getChewing());
+		cursor_ = 0;
+		setCursorIndex(cursor_);
 		generate();
     }
 
@@ -121,9 +125,7 @@ public:
 			prev();
 			cursor_ = 0;
 		}
-        auto *state = ic_->propertyFor(engine_->factory());
-		state -> setCursor(cursor_);
-		FCITX_INFO() << "prev candidate: " << cursor_;
+		setCursorIndex(cursor_);
 	}
 
     void nextCandidate() override {
@@ -132,15 +134,17 @@ public:
 			next();
 			cursor_ = 0;
 		}
-        auto *state = ic_->propertyFor(engine_->factory());
-		state -> setCursor(cursor_);
-		FCITX_INFO() << "next candidate: " << cursor_;
+		setCursorIndex(cursor_);
 	}
 
     int cursorIndex() const override { return cursor_; }
 
 	void setCursorIndex(int index) {
-		if (index >= 0 && index < size()) cursor_ = index;
+		if (index >= 0 && index < size()) {
+			cursor_ = index;
+			auto *state = ic_->propertyFor(engine_->factory());
+			state -> setCursor(index);
+		}
 		return;
 	}
 

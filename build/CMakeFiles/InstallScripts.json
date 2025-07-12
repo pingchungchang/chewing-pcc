@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/PCC/tmp/im/fcitx5-intel_chewing/build/cmake_install.cmake",
+		"/home/PCC/tmp/im/fcitx5-intel_chewing/build/src/cmake_install.cmake",
+		"/home/PCC/tmp/im/fcitx5-intel_chewing/build/po/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

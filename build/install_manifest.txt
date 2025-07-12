@@ -1,0 +1,4 @@
+/usr/lib/fcitx5/libintel_chewing.so
+/usr/share/fcitx5/addon/intel_chewing.conf
+/usr/share/fcitx5/inputmethod/intel_chewing.conf
+/usr/share/locale/zh_TW/LC_MESSAGES/fcitx5-intel_chewing.mo
