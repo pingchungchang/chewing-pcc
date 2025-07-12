@@ -99,8 +99,7 @@ public:
         }
         auto *state = ic_->propertyFor(engine_->factory());
 		chewing_handle_PageUp(state -> getChewing());
-		cursor_ = 0;
-		setCursorIndex(cursor_);
+		setCursorIndex(0);
 		generate();
     }
     void next() override {
@@ -110,31 +109,26 @@ public:
         }
         auto *state = ic_->propertyFor(engine_->factory());
 		chewing_handle_Down(state -> getChewing());
-		cursor_ = 0;
-		setCursorIndex(cursor_);
+		setCursorIndex(0);
 		generate();
     }
 
-    bool hasPrev() const override { /*TODO*/ return true; }
+    bool hasPrev() const override { return true; }
 
-    bool hasNext() const override { /*TODO*/ return true; }
+    bool hasNext() const override { return true; }
 
     void prevCandidate() override {
-		cursor_ --;
-		if (cursor_ < 0) {
+		if (cursor_ == 0) {
 			prev();
-			cursor_ = 0;
 		}
-		setCursorIndex(cursor_);
+		else setCursorIndex(cursor_ - 1);
 	}
 
     void nextCandidate() override {
-		cursor_ ++;
-		if (cursor_ >= size()) {
+		if (cursor_ + 1 == size()) {
 			next();
-			cursor_ = 0;
 		}
-		setCursorIndex(cursor_);
+		else setCursorIndex(cursor_ + 1);
 	}
 
     int cursorIndex() const override { return cursor_; }
@@ -243,6 +237,11 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
 			candidateList -> candidate(candidateList -> cursorIndex()).select(ic_);
 			return event.filterAndAccept();
 		}
+		if (event.key().check(FcitxKey_Escape)) {
+			// TODO
+			chewing_handle_Esc(chewing_ctx);
+			return event.filterAndAccept();
+		}
     }
 	else {
 		FCITX_INFO() << "warning no candidate list!!";
@@ -251,6 +250,7 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
 }
 
 void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
+	cursor_ = 0;
 	if (event.key().check(FcitxKey_space)) {
 		chewing_handle_Space(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Escape)) {
