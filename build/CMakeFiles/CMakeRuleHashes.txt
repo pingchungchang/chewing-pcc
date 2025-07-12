@@ -1,7 +1,0 @@
-# Hashes of file build rules.
-343dae2aefe5dc22b45a8e35b2236f2f po/CMakeFiles/fcitx5-intel_chewing-translation
-92a2f5d7b3ac8e91e6216c077f6b2414 po/fcitx5-intel_chewing-zh_TW.mo
-e55cbd2bb5c05ae418d955acefab4254 src/CMakeFiles/intel_chewing-addon.conf.in-fmt
-e55cbd2bb5c05ae418d955acefab4254 src/CMakeFiles/intel_chewing.conf.in-fmt
-6ffbbd7f9cb025864edef1cd9af78094 src/intel_chewing-addon.conf
-df9ebb0021f81ce67d4f897d84d16571 src/intel_chewing.conf

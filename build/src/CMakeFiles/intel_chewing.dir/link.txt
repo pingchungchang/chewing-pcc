@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -Wall -Wextra  -g -Wl,--dependency-file=CMakeFiles/intel_chewing.dir/link.d -Wl,--no-undefined -Wl,--as-needed  -shared -Wl,-soname,libintel_chewing.so -o libintel_chewing.so CMakeFiles/intel_chewing.dir/intel_chewing.cpp.o  /usr/lib/libFcitx5Core.so.5.1.14 -lchewing /usr/lib/libFcitx5Config.so.5.1.14 /usr/lib/libFcitx5Utils.so.5.1.14
