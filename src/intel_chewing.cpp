@@ -323,20 +323,21 @@ void IntelChewingState::updateUI() {
 		bytes_per_word = buffer_string.size() / chewing_buffer_Len(chewing_ctx);
 	}
 	int buffer_cursor = chewing_cursor_Current(chewing_ctx);
+	int preedit_cursor = fcitx::utf8::nextNChar(buffer_string.begin(), buffer_cursor) - buffer_string.begin();
 	std::string shown_text = 
-		buffer_string.substr(0, bytes_per_word * buffer_cursor) 
+		buffer_string.substr(0, preedit_cursor) 
 		+ std::string(chewing_bopomofo_String_static(chewing_ctx)) 
-		+ buffer_string.substr(bytes_per_word * buffer_cursor, buffer_string.size() - bytes_per_word * buffer_cursor);
-	FCITX_INFO() << "cursor = " << bytes_per_word * buffer_cursor << ',' << buffer_string.size();
+		+ buffer_string.substr(preedit_cursor, buffer_string.size() - preedit_cursor);
+	FCITX_INFO() << "cursor = " << buffer_cursor << "::" << preedit_cursor << ',' << buffer_string.size();
 
     if (ic_->capabilityFlags().test(fcitx::CapabilityFlag::Preedit)) {
         fcitx::Text preedit(shown_text,
                             fcitx::TextFormatFlag::HighLight);
-		preedit.setCursor(bytes_per_word * buffer_cursor);
+		preedit.setCursor(preedit_cursor);
         inputPanel.setClientPreedit(preedit);
     } else {
         fcitx::Text preedit(shown_text);
-		preedit.setCursor(bytes_per_word * buffer_cursor);
+		preedit.setCursor(preedit_cursor);
         inputPanel.setPreedit(preedit);
     }
     ic_->updateUserInterface(fcitx::UserInterfaceComponent::InputPanel);
