@@ -38,6 +38,11 @@ public:
     }
 	void setCandidateCursor(int index) { candidate_cursor_ = index; }
 	int getCandidateCursor() { return candidate_cursor_; }
+	~IntelChewingState() {
+		if (chewing_ctx) {
+			chewing_delete(chewing_ctx);
+		}
+	}
 
 private:
     IntelChewingEngine *engine_;
