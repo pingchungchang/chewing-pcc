@@ -168,6 +168,12 @@ private:
     int cursor_ = 0;
 };
 
+enum INPUT_MODE {
+	CHEWING_MODE,
+	ENGLISH_MODE,
+	EMPTY
+};
+
 } // namespace
   //
 void IntelChewingState::initChewing() {
@@ -180,6 +186,16 @@ void IntelChewingState::initChewing() {
 	chewing_set_maxChiSymbolLen(chewing_ctx, 10);
 	chewing_set_candPerPage(chewing_ctx, 10);
 	return;
+}
+
+int IntelChewingState::getPreeditLen() {
+	return preedit_modes_.size();
+}
+
+int IntelChewingState::getCursorMode(bool direction) {
+	int idx = preedit_cursor_ - (!direction);
+	if (idx < 0 || idx >= getPreeditLen()) return EMPTY;
+	else return preedit_modes_[idx];
 }
 
 void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
@@ -250,7 +266,6 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
 }
 
 void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
-	candidate_cursor_ = 0;
 	if (event.key().check(FcitxKey_space)) {
 		chewing_handle_Space(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Escape)) {
@@ -294,6 +309,7 @@ void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 
 void IntelChewingState::handleEvent(fcitx::KeyEvent &event) {
 	if (chewing_cand_CheckDone(chewing_ctx)) {
+		candidate_cursor_ = 0;
 		handleKeyEvent(event);
 	}
 	else handleCandidateEvent(event);

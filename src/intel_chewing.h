@@ -24,9 +24,13 @@ public:
 	void initChewing();
     IntelChewingState(IntelChewingEngine *engine, fcitx::InputContext *ic)
         : engine_(engine), ic_(ic) {
+			preedit_modes_.reserve(10);
+			preedit_string_.reserve(20);
 			initChewing();
 	}
 
+	int getPreeditLen();
+	int getCursorMode(bool direction); //0 for left, 1 for right
     void handleEvent(fcitx::KeyEvent &keyEvent);
     void handleKeyEvent(fcitx::KeyEvent &keyEvent);
 	void handleCandidateEvent(fcitx::KeyEvent& keyEvent);
@@ -49,6 +53,9 @@ private:
     fcitx::InputContext *ic_;
 	ChewingContext* chewing_ctx;
 	int candidate_cursor_;
+	std::string preedit_string_;
+	std::vector<int> preedit_modes_;
+	int input_mode_;
 };
 
 class IntelChewingEngine : public fcitx::InputMethodEngineV2 {
