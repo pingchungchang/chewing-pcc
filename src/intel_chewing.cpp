@@ -179,6 +179,7 @@ void IntelChewingState::initChewing() {
 	chewing_set_selKey(chewing_ctx, SEL_KEYS, 10);
 	chewing_set_maxChiSymbolLen(chewing_ctx, 10);
 	chewing_set_candPerPage(chewing_ctx, 10);
+	chewing_set_ChiEngMode(chewing_ctx, 1);
 	return;
 }
 
@@ -286,6 +287,7 @@ void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 	} else if (event.key().check(FcitxKey_Caps_Lock)) {
 		chewing_handle_Capslock(chewing_ctx);
 	} else {
+		bopomofo_eng_ += event.key().sym();
 		chewing_handle_Default(chewing_ctx, event.key().sym());
 	}
 	if (chewing_keystroke_CheckIgnore(chewing_ctx)) return;
@@ -304,6 +306,27 @@ void IntelChewingState::handleEvent(fcitx::KeyEvent &event) {
 void IntelChewingState::updateUI() {
     auto &inputPanel = ic_->inputPanel();
     inputPanel.reset();
+	if (!chewing_bopomofo_Check(chewing_ctx)) {
+		bopomofo_eng_.clear();
+	}
+	if (bopomofo_eng_.size() >= 4) {
+		chewing_clean_bopomofo_buf(chewing_ctx);
+		FCITX_INFO() << "bopomofo check: " << chewing_bopomofo_Check(chewing_ctx);
+		chewing_set_ChiEngMode(chewing_ctx, 0);
+		chewing_handle_Backspace(chewing_ctx);
+		FCITX_INFO() << "setting to mode 0";
+		for(auto &i: bopomofo_eng_) {
+			chewing_handle_Default(chewing_ctx, i);
+			if (chewing_commit_Check(chewing_ctx)) {
+				std::string commit_string(chewing_commit_String_static(chewing_ctx));
+				FCITX_INFO() << "commiting: "<<commit_string;
+				ic_->commitString(commit_string);
+			}
+		}
+		bopomofo_eng_.clear();
+		chewing_set_ChiEngMode(chewing_ctx, 1);
+	}
+
 	if (chewing_commit_Check(chewing_ctx)) {
 		std::string commit_string(chewing_commit_String_static(chewing_ctx));
 		FCITX_INFO() << "commiting: "<<commit_string;
@@ -315,13 +338,8 @@ void IntelChewingState::updateUI() {
             engine_, ic_, chewing_ctx));
 		inputPanel.candidateList() -> toCursorModifiable() -> setCursorIndex(candidate_cursor_);
 	}
-
 	std::string buffer_string(chewing_buffer_String_static(chewing_ctx));
 	FCITX_INFO() << "buffer string = " << buffer_string;
-	int bytes_per_word = 0;
-	if (!buffer_string.empty()) {
-		bytes_per_word = buffer_string.size() / chewing_buffer_Len(chewing_ctx);
-	}
 	int buffer_cursor = chewing_cursor_Current(chewing_ctx);
 	int preedit_cursor = fcitx::utf8::nextNChar(buffer_string.begin(), buffer_cursor) - buffer_string.begin();
 	std::string shown_text = 

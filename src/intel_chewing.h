@@ -49,6 +49,7 @@ private:
     fcitx::InputContext *ic_;
 	ChewingContext* chewing_ctx;
 	int candidate_cursor_;
+	std::string bopomofo_eng_;
 };
 
 class IntelChewingEngine : public fcitx::InputMethodEngineV2 {
