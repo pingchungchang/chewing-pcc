@@ -252,8 +252,10 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
 
 void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 	candidate_cursor_ = 0;
+	bool handled_by_default = false;
 	if (event.key().check(FcitxKey_space)) {
 		chewing_handle_Space(chewing_ctx);
+		if (!bopomofo_eng_.empty()) bopomofo_eng_ += " ";
 	} else if (event.key().check(FcitxKey_Escape)) {
 		chewing_handle_Esc(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Return)) {
@@ -262,6 +264,7 @@ void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 		chewing_handle_Del(chewing_ctx);
 	} else if (event.key().check(FcitxKey_BackSpace)) {
 		chewing_handle_Backspace(chewing_ctx);
+		if (!bopomofo_eng_.empty()) bopomofo_eng_.pop_back();
 	} else if (event.key().check(FcitxKey_Tab)) {
 		chewing_handle_Tab(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Shift_L)) {
@@ -288,7 +291,13 @@ void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 		chewing_handle_Capslock(chewing_ctx);
 	} else {
 		bopomofo_eng_ += event.key().sym();
+		handled_by_default = true;
 		chewing_handle_Default(chewing_ctx, event.key().sym());
+	}
+	if (!handled_by_default) {
+		if (chewing_get_ChiEngMode(chewing_ctx) == 0) {
+			chewing_set_ChiEngMode(chewing_ctx, 1);
+		}
 	}
 	if (chewing_keystroke_CheckIgnore(chewing_ctx)) return;
 	else return event.filterAndAccept();
@@ -303,18 +312,29 @@ void IntelChewingState::handleEvent(fcitx::KeyEvent &event) {
 	return;
 }
 
+bool IntelChewingState::iThinkItIsEnglish() {
+	if (bopomofo_eng_.empty()) return false;
+	if (chewing_bopomofo_Check(chewing_ctx) 
+			&& bopomofo_eng_.size() >= fcitx::utf8::length(std::string(chewing_bopomofo_String_static(chewing_ctx))) + 2) return true;
+	if (prev_buffer_ == std::string(chewing_buffer_String_static(chewing_ctx)) && 
+			!chewing_bopomofo_Check(chewing_ctx)) return true;
+	return false;
+}
+
 void IntelChewingState::updateUI() {
     auto &inputPanel = ic_->inputPanel();
     inputPanel.reset();
 	FCITX_INFO() << "bopomofo_eng_ = " << bopomofo_eng_ << ", " << bopomofo_eng_.size();
-	if (!chewing_bopomofo_Check(chewing_ctx)) {
-		bopomofo_eng_.clear();
-	}
-	if (bopomofo_eng_.size() >= 4) {
+	FCITX_INFO() << "is it English = " << iThinkItIsEnglish();
+	if (iThinkItIsEnglish()) {
+		bool clear_bopomofo = false;
+		if (chewing_bopomofo_Check(chewing_ctx)) clear_bopomofo = true;
 		chewing_clean_bopomofo_buf(chewing_ctx);
 		FCITX_INFO() << "bopomofo check: " << chewing_bopomofo_Check(chewing_ctx);
 		chewing_set_ChiEngMode(chewing_ctx, 0);
-		chewing_handle_Backspace(chewing_ctx);
+		if (clear_bopomofo) {
+			chewing_handle_Backspace(chewing_ctx);
+		}
 		FCITX_INFO() << "setting to mode 0";
 		for(auto &i: bopomofo_eng_) {
 			chewing_handle_Default(chewing_ctx, i);
@@ -324,8 +344,8 @@ void IntelChewingState::updateUI() {
 				ic_->commitString(commit_string);
 			}
 		}
+		if (!bopomofo_eng_.empty() && bopomofo_eng_.back() == ' ') chewing_set_ChiEngMode(chewing_ctx, 1);
 		bopomofo_eng_.clear();
-		chewing_set_ChiEngMode(chewing_ctx, 1);
 	}
 	else {
 		if (chewing_commit_Check(chewing_ctx)) {
@@ -333,6 +353,9 @@ void IntelChewingState::updateUI() {
 			FCITX_INFO() << "commiting: "<<commit_string;
 			ic_->commitString(commit_string);
 		}
+	}
+	if (!chewing_bopomofo_Check(chewing_ctx)) {
+		bopomofo_eng_.clear();
 	}
 
 	if (!chewing_cand_CheckDone(chewing_ctx)) {
@@ -342,7 +365,7 @@ void IntelChewingState::updateUI() {
 		inputPanel.candidateList() -> toCursorModifiable() -> setCursorIndex(candidate_cursor_);
 	}
 	std::string buffer_string(chewing_buffer_String_static(chewing_ctx));
-	FCITX_INFO() << "buffer string = " << buffer_string;
+	FCITX_INFO() << "buffer string = \"" << buffer_string << "\"";
 	int buffer_cursor = chewing_cursor_Current(chewing_ctx);
 	int preedit_cursor = fcitx::utf8::nextNChar(buffer_string.begin(), buffer_cursor) - buffer_string.begin();
 	std::string shown_text = 
@@ -363,6 +386,7 @@ void IntelChewingState::updateUI() {
     }
     ic_->updateUserInterface(fcitx::UserInterfaceComponent::InputPanel);
     ic_->updatePreedit();
+	prev_buffer_ = buffer_string;
 }
 
 IntelChewingEngine::IntelChewingEngine(fcitx::Instance *instance)

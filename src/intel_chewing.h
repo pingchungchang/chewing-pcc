@@ -34,6 +34,7 @@ public:
     void updateUI();
     void reset() {
 		chewing_Reset(chewing_ctx);
+		chewing_set_ChiEngMode(chewing_ctx, 1);
         updateUI();
     }
 	void setCandidateCursor(int index) { candidate_cursor_ = index; }
@@ -43,6 +44,7 @@ public:
 			chewing_delete(chewing_ctx);
 		}
 	}
+	bool iThinkItIsEnglish();
 
 private:
     IntelChewingEngine *engine_;
@@ -50,6 +52,7 @@ private:
 	ChewingContext* chewing_ctx;
 	int candidate_cursor_;
 	std::string bopomofo_eng_;
+	std::string prev_buffer_;
 };
 
 class IntelChewingEngine : public fcitx::InputMethodEngineV2 {
