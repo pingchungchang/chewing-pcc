@@ -306,6 +306,7 @@ void IntelChewingState::handleEvent(fcitx::KeyEvent &event) {
 void IntelChewingState::updateUI() {
     auto &inputPanel = ic_->inputPanel();
     inputPanel.reset();
+	FCITX_INFO() << "bopomofo_eng_ = " << bopomofo_eng_ << ", " << bopomofo_eng_.size();
 	if (!chewing_bopomofo_Check(chewing_ctx)) {
 		bopomofo_eng_.clear();
 	}
@@ -326,12 +327,14 @@ void IntelChewingState::updateUI() {
 		bopomofo_eng_.clear();
 		chewing_set_ChiEngMode(chewing_ctx, 1);
 	}
-
-	if (chewing_commit_Check(chewing_ctx)) {
-		std::string commit_string(chewing_commit_String_static(chewing_ctx));
-		FCITX_INFO() << "commiting: "<<commit_string;
-        ic_->commitString(commit_string);
+	else {
+		if (chewing_commit_Check(chewing_ctx)) {
+			std::string commit_string(chewing_commit_String_static(chewing_ctx));
+			FCITX_INFO() << "commiting: "<<commit_string;
+			ic_->commitString(commit_string);
+		}
 	}
+
 	if (!chewing_cand_CheckDone(chewing_ctx)) {
 		// show candidate list
         inputPanel.setCandidateList(std::make_unique<IntelChewingCandidateList>(
