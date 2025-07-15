@@ -20,67 +20,69 @@
 class IntelChewingEngine;
 
 class IntelChewingState : public fcitx::InputContextProperty {
-public:
-	void initChewing();
-    IntelChewingState(IntelChewingEngine *engine, fcitx::InputContext *ic)
-        : engine_(engine), ic_(ic) {
-			preedit_modes_.reserve(10);
-			preedit_string_.reserve(20);
-			initChewing();
-	}
+	public:
+		ChewingContext* initChewing();
+		IntelChewingState(IntelChewingEngine *engine, fcitx::InputContext *ic)
+			: engine_(engine), ic_(ic) {
+				chewing_ctx_.push_back(std::unique_ptr<ChewingContext, decltype(&chewing_delete)>(initChewing(), &chewing_delete));
+				preedit_ctx_ = chewing_ctx_.begin();
+			}
 
-	int getPreeditLen();
-	int getCursorMode(bool direction); //0 for left, 1 for right
-    void handleEvent(fcitx::KeyEvent &keyEvent);
-    void handleKeyEvent(fcitx::KeyEvent &keyEvent);
-	void handleCandidateEvent(fcitx::KeyEvent& keyEvent);
-	ChewingContext* getChewing() { return chewing_ctx; }
-    void updateUI();
-    void reset() {
-		chewing_Reset(chewing_ctx);
-        updateUI();
-    }
-	void setCandidateCursor(int index) { candidate_cursor_ = index; }
-	int getCandidateCursor() { return candidate_cursor_; }
-	~IntelChewingState() {
-		if (chewing_ctx) {
-			chewing_delete(chewing_ctx);
+		void handleEvent(fcitx::KeyEvent &keyEvent);
+		void handleKeyEvent(fcitx::KeyEvent &keyEvent);
+		void handleCandidateEvent(fcitx::KeyEvent& keyEvent);
+		ChewingContext* getChewing() { return preedit_ctx_ -> get(); }
+		void updateUI();
+		void reset() {
+			chewing_Reset(preedit_ctx_ -> get());
+			updateUI();
 		}
-	}
+		void setCandidateCursor(int index) { candidate_cursor_ = index; }
+		int getCandidateCursor() { return candidate_cursor_; }
+	private:
 
-private:
-    IntelChewingEngine *engine_;
-    fcitx::InputContext *ic_;
-	ChewingContext* chewing_ctx;
-	int candidate_cursor_;
-	std::string preedit_string_;
-	std::vector<int> preedit_modes_;
-	int input_mode_;
+		void moveChewingCursor(ChewingContext* ctx, int rounds, int dir) {
+			while(rounds --) {
+				switch(dir) {
+					case -1:
+						chewing_handle_Left(ctx);  break;
+					case 1:
+						chewing_handle_Right(ctx); break;
+				}
+			}
+			return;
+		}
+
+		IntelChewingEngine *engine_;
+		fcitx::InputContext *ic_;
+		std::vector<std::unique_ptr<ChewingContext, decltype(&chewing_delete)>> chewing_ctx_;
+		std::vector<std::unique_ptr<ChewingContext, decltype(&chewing_delete)>>::iterator preedit_ctx_;
+		int candidate_cursor_;
 };
 
 class IntelChewingEngine : public fcitx::InputMethodEngineV2 {
-public:
-    IntelChewingEngine(fcitx::Instance *instance);
+	public:
+		IntelChewingEngine(fcitx::Instance *instance);
 
-    void keyEvent(const fcitx::InputMethodEntry &entry,
-                  fcitx::KeyEvent &keyEvent) override;
+		void keyEvent(const fcitx::InputMethodEntry &entry,
+				fcitx::KeyEvent &keyEvent) override;
 
-    void reset(const fcitx::InputMethodEntry &,
-               fcitx::InputContextEvent &event) override;
+		void reset(const fcitx::InputMethodEntry &,
+				fcitx::InputContextEvent &event) override;
 
-    auto factory() const { return &factory_; }
-    auto instance() const { return instance_; }
+		auto factory() const { return &factory_; }
+		auto instance() const { return instance_; }
 
-private:
-    fcitx::Instance *instance_;
-    fcitx::FactoryFor<IntelChewingState> factory_;
+	private:
+		fcitx::Instance *instance_;
+		fcitx::FactoryFor<IntelChewingState> factory_;
 };
 
 class IntelChewingEngineFactory : public fcitx::AddonFactory {
-    fcitx::AddonInstance *create(fcitx::AddonManager *manager) override {
-        FCITX_UNUSED(manager);
-        return new IntelChewingEngine(manager->instance());
-    }
+	fcitx::AddonInstance *create(fcitx::AddonManager *manager) override {
+		FCITX_UNUSED(manager);
+		return new IntelChewingEngine(manager->instance());
+	}
 };
 
 #endif // _FCITX5_INTEL_CHEWING_INTEL_CHEWING_H_

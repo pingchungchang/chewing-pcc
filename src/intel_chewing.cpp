@@ -176,26 +176,16 @@ enum INPUT_MODE {
 
 } // namespace
   //
-void IntelChewingState::initChewing() {
-	chewing_ctx = chewing_new2(CHEWING_DATA_DIR, user_data_dir.c_str(), NULL, 0);
+ChewingContext* IntelChewingState::initChewing() {
+	ChewingContext* chewing_ctx = chewing_new2(CHEWING_DATA_DIR, user_data_dir.c_str(), NULL, 0);
 	if (!chewing_ctx) {
 		FCITX_INFO() << "error initializing chewing_ctx";
-		return;
+		return nullptr;
 	}
 	chewing_set_selKey(chewing_ctx, SEL_KEYS, 10);
 	chewing_set_maxChiSymbolLen(chewing_ctx, 10);
 	chewing_set_candPerPage(chewing_ctx, 10);
-	return;
-}
-
-int IntelChewingState::getPreeditLen() {
-	return preedit_modes_.size();
-}
-
-int IntelChewingState::getCursorMode(bool direction) {
-	int idx = preedit_cursor_ - (!direction);
-	if (idx < 0 || idx >= getPreeditLen()) return EMPTY;
-	else return preedit_modes_[idx];
+	return chewing_ctx;
 }
 
 void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
@@ -254,61 +244,85 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
 			return event.filterAndAccept();
 		}
 		if (event.key().check(FcitxKey_Escape)) {
-			// TODO
-			chewing_handle_Esc(chewing_ctx);
+			chewing_handle_Esc(preedit_ctx_ -> get());
 			return event.filterAndAccept();
 		}
     }
 	else {
 		FCITX_INFO() << "warning no candidate list!!";
 	}
-
 }
 
 void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 	if (event.key().check(FcitxKey_space)) {
-		chewing_handle_Space(chewing_ctx);
+		chewing_handle_Space(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Escape)) {
-		chewing_handle_Esc(chewing_ctx);
+		chewing_handle_Esc(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Return)) {
-		chewing_handle_Enter(chewing_ctx);
+		chewing_handle_Enter(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Delete)) {
-		chewing_handle_Del(chewing_ctx);
+		if (chewing_cursor_Current(preedit_ctx_ -> get())
+			== chewing_buffer_Len(preedit_ctx_ -> get())) {
+			if (next(preedit_ctx_) != chewing_ctx_.end()) {
+				preedit_ctx_ ++;
+				moveChewingCursor(preedit_ctx_ -> get(), INT_MAX, -1);
+			}
+		}
+		chewing_handle_Del(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_BackSpace)) {
-		chewing_handle_Backspace(chewing_ctx);
+		if (chewing_cursor_Current(preedit_ctx_ -> get()) == 0) {
+			if (preedit_ctx_ != chewing_ctx_.begin()) {
+				preedit_ctx_ --;
+				moveChewingCursor(preedit_ctx_ -> get(), INT_MAX, 1);
+			}
+		}
+		chewing_handle_Backspace(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Tab)) {
-		chewing_handle_Tab(chewing_ctx);
+		chewing_handle_Tab(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Shift_L)) {
-		chewing_handle_ShiftLeft (chewing_ctx);
+		chewing_handle_ShiftLeft(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Left)) {
-		chewing_handle_Left(chewing_ctx);
+		if (chewing_cursor_Current(preedit_ctx_ -> get()) == 0) {
+			if (preedit_ctx_ != chewing_ctx_.begin()) {
+				preedit_ctx_ --;
+				moveChewingCursor(preedit_ctx_ -> get(), INT_MAX, 1);
+			}
+		}
+		chewing_handle_Left(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Shift_R)) {
-		chewing_handle_ShiftRight(chewing_ctx);
+		chewing_handle_ShiftRight(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Right)) {
-		chewing_handle_Right(chewing_ctx);
+		if (chewing_cursor_Current(preedit_ctx_ -> get()) + 1== 
+			chewing_buffer_Len(preedit_ctx_ -> get())) {
+			if (next(preedit_ctx_) != chewing_ctx_.end()) {
+				preedit_ctx_ ++;
+				moveChewingCursor(preedit_ctx_ -> get(), INT_MAX, -1);
+			}
+		}
+		chewing_handle_Right(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Up)) {
-		chewing_handle_Up(chewing_ctx);
+		chewing_handle_Up(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Home)) {
-		chewing_handle_Home(chewing_ctx);
+		chewing_handle_Home(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_End)) {
-		chewing_handle_End(chewing_ctx);
+		chewing_handle_End(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Page_Up)) {
-		chewing_handle_PageUp(chewing_ctx);
+		chewing_handle_PageUp(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Page_Down)) {
-		chewing_handle_PageDown(chewing_ctx);
+		chewing_handle_PageDown(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Down)) {
-		chewing_handle_Down(chewing_ctx);
+		chewing_handle_Down(preedit_ctx_ -> get());
 	} else if (event.key().check(FcitxKey_Caps_Lock)) {
-		chewing_handle_Capslock(chewing_ctx);
+		chewing_handle_Capslock(preedit_ctx_ -> get());
 	} else {
-		chewing_handle_Default(chewing_ctx, event.key().sym());
+		chewing_handle_Default(preedit_ctx_ -> get(), event.key().sym());
 	}
-	if (chewing_keystroke_CheckIgnore(chewing_ctx)) return;
+	if (chewing_keystroke_CheckIgnore(preedit_ctx_ -> get())) return;
 	else return event.filterAndAccept();
 }
 
 void IntelChewingState::handleEvent(fcitx::KeyEvent &event) {
-	if (chewing_cand_CheckDone(chewing_ctx)) {
+	if (chewing_cand_CheckDone(preedit_ctx_ -> get())) {
 		candidate_cursor_ = 0;
 		handleKeyEvent(event);
 	}
@@ -317,6 +331,7 @@ void IntelChewingState::handleEvent(fcitx::KeyEvent &event) {
 	return;
 }
 
+//TODO
 void IntelChewingState::updateUI() {
     auto &inputPanel = ic_->inputPanel();
     inputPanel.reset();
