@@ -36,14 +36,14 @@ public:
 		chewing_Reset(chewing_ctx);
         updateUI();
     }
-	void setCursor(int index) { cursor_ = index; }
-	int getCursor() { return cursor_; }
+	void setCandidateCursor(int index) { candidate_cursor_ = index; }
+	int getCandidateCursor() { return candidate_cursor_; }
 
 private:
     IntelChewingEngine *engine_;
     fcitx::InputContext *ic_;
 	ChewingContext* chewing_ctx;
-	int cursor_;
+	int candidate_cursor_;
 };
 
 class IntelChewingEngine : public fcitx::InputMethodEngineV2 {

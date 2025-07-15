@@ -137,7 +137,7 @@ public:
 		if (index >= 0 && index < size()) {
 			cursor_ = index;
 			auto *state = ic_->propertyFor(engine_->factory());
-			state -> setCursor(index);
+			state -> setCandidateCursor(index);
 		}
 		return;
 	}
@@ -250,7 +250,7 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
 }
 
 void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
-	cursor_ = 0;
+	candidate_cursor_ = 0;
 	if (event.key().check(FcitxKey_space)) {
 		chewing_handle_Space(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Escape)) {
@@ -313,7 +313,7 @@ void IntelChewingState::updateUI() {
 		// show candidate list
         inputPanel.setCandidateList(std::make_unique<IntelChewingCandidateList>(
             engine_, ic_, chewing_ctx));
-		inputPanel.candidateList() -> toCursorModifiable() -> setCursorIndex(cursor_);
+		inputPanel.candidateList() -> toCursorModifiable() -> setCursorIndex(candidate_cursor_);
 	}
 
 	std::string buffer_string(chewing_buffer_String_static(chewing_ctx));
