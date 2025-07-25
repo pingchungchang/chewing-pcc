@@ -289,7 +289,7 @@ void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 		chewing_handle_Down(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Caps_Lock)) {
 		chewing_handle_Capslock(chewing_ctx);
-	} else {
+	} else if (event.key().isSimple()) {
 		bopomofo_eng_ += event.key().sym();
 		handled_by_default = true;
 		chewing_handle_Default(chewing_ctx, event.key().sym());
