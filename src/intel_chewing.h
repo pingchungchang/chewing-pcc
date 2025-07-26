@@ -17,6 +17,20 @@
 #include <fcitx/instance.h>
 #include <chewing.h>
 
+#include <fcitx-utils/i18n.h>
+#include <fcitx-utils/misc.h>
+#include <fcitx-utils/trackableobject.h>
+#include <fcitx-config/configuration.h>
+#include <fcitx-config/enum.h>
+#include <fcitx-config/iniparser.h>
+#include <fcitx-config/option.h>
+#include <fcitx-config/rawconfig.h>
+
+namespace IntelChewingConfigs {
+	bool ShowEnglishInsteadOfBopomofo = true;
+	int ErrorCount = 0;
+}
+
 class IntelChewingEngine;
 
 class IntelChewingState : public fcitx::InputContextProperty {

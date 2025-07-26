@@ -10,5 +10,4 @@ LangCode=zh_TW
 # Match addon name
 Addon=intel_chewing
 # Whether this input method support customization
-# Configurable=True
-
+Configurable=True

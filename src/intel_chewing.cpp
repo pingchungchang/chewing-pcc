@@ -321,7 +321,7 @@ void IntelChewingState::handleEvent(fcitx::KeyEvent &event) {
 bool IntelChewingState::iThinkItIsEnglish() {
 	if (bopomofo_eng_.empty()) return false;
 	if (chewing_bopomofo_Check(chewing_ctx) 
-			&& bopomofo_eng_.size() >= fcitx::utf8::length(std::string(chewing_bopomofo_String_static(chewing_ctx))) + 2) return true;
+			&& bopomofo_eng_.size() >= fcitx::utf8::length(std::string(chewing_bopomofo_String_static(chewing_ctx))) + IntelChewingConfigs::ErrorCount + 1) return true;
 	if (prev_buffer_ == std::string(chewing_buffer_String_static(chewing_ctx)) && 
 			!chewing_bopomofo_Check(chewing_ctx)) return true;
 	return false;
@@ -380,9 +380,16 @@ void IntelChewingState::updateUI() {
 	FCITX_INFO() << "buffer string = \"" << buffer_string << "\"";
 	int buffer_cursor = chewing_cursor_Current(chewing_ctx);
 	int preedit_cursor = fcitx::utf8::nextNChar(buffer_string.begin(), buffer_cursor) - buffer_string.begin();
+	std::string bopomofo_string;
+	if (IntelChewingConfigs::ShowEnglishInsteadOfBopomofo) {
+		bopomofo_string = bopomofo_eng_;
+	}
+	else {
+		bopomofo_string = std::string(chewing_bopomofo_String_static(chewing_ctx));
+	}
 	std::string shown_text = 
 		buffer_string.substr(0, preedit_cursor) 
-		+ std::string(chewing_bopomofo_String_static(chewing_ctx)) 
+		+ bopomofo_string
 		+ buffer_string.substr(preedit_cursor, buffer_string.size() - preedit_cursor);
 	FCITX_INFO() << "cursor = " << buffer_cursor << "::" << preedit_cursor << ',' << buffer_string.size();
 
