@@ -180,6 +180,8 @@ void IntelChewingState::initChewing() {
 	chewing_set_maxChiSymbolLen(chewing_ctx, 10);
 	chewing_set_candPerPage(chewing_ctx, 10);
 	chewing_set_ChiEngMode(chewing_ctx, 1);
+	current_language_ = 1;
+	to_eng_handled_ = false;
 	return;
 }
 
@@ -252,7 +254,7 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
 
 void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 	candidate_cursor_ = 0;
-	bool handled_by_default = false;
+	bool reset_language = true;
 	if (event.key().check(FcitxKey_space)) {
 		chewing_handle_Space(chewing_ctx);
 		if (!bopomofo_eng_.empty()) bopomofo_eng_ += " ";
@@ -266,6 +268,8 @@ void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 		chewing_handle_Backspace(chewing_ctx);
 		if (!bopomofo_eng_.empty()) bopomofo_eng_.pop_back();
 	} else if (event.key().check(FcitxKey_Tab)) {
+		current_language_ = 0;
+		reset_language = false;
 		chewing_handle_Tab(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Shift_L)) {
 		chewing_handle_ShiftLeft (chewing_ctx);
@@ -291,12 +295,14 @@ void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 		chewing_handle_Capslock(chewing_ctx);
 	} else if (event.key().isSimple()) {
 		bopomofo_eng_ += event.key().sym();
-		handled_by_default = true;
+		reset_language = false;
 		chewing_handle_Default(chewing_ctx, event.key().sym());
 	}
-	if (!handled_by_default) {
+	if (reset_language) {
 		if (chewing_get_ChiEngMode(chewing_ctx) == 0) {
 			chewing_set_ChiEngMode(chewing_ctx, 1);
+			current_language_ = 1;
+			to_eng_handled_ = false;
 		}
 	}
 	if (chewing_keystroke_CheckIgnore(chewing_ctx)) return;
@@ -326,7 +332,9 @@ void IntelChewingState::updateUI() {
     inputPanel.reset();
 	FCITX_INFO() << "bopomofo_eng_ = " << bopomofo_eng_ << ", " << bopomofo_eng_.size();
 	FCITX_INFO() << "is it English = " << iThinkItIsEnglish();
-	if (iThinkItIsEnglish()) {
+	if (iThinkItIsEnglish()) current_language_ = 0;
+	if (current_language_ == 0 && !to_eng_handled_) {
+		to_eng_handled_ = true;
 		bool clear_bopomofo = false;
 		if (chewing_bopomofo_Check(chewing_ctx)) clear_bopomofo = true;
 		chewing_clean_bopomofo_buf(chewing_ctx);
@@ -344,7 +352,11 @@ void IntelChewingState::updateUI() {
 				ic_->commitString(commit_string);
 			}
 		}
-		if (!bopomofo_eng_.empty() && bopomofo_eng_.back() == ' ') chewing_set_ChiEngMode(chewing_ctx, 1);
+		if (!bopomofo_eng_.empty() && bopomofo_eng_.back() == ' ') {
+			chewing_set_ChiEngMode(chewing_ctx, 1);
+			current_language_ = 1;
+			to_eng_handled_ = false;
+		}
 		bopomofo_eng_.clear();
 	}
 	else {

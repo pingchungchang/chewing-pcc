@@ -53,6 +53,8 @@ private:
 	int candidate_cursor_;
 	std::string bopomofo_eng_;
 	std::string prev_buffer_;
+	int current_language_ = 1;
+	bool to_eng_handled_ = false;
 };
 
 class IntelChewingEngine : public fcitx::InputMethodEngineV2 {
