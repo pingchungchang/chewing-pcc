@@ -152,8 +152,6 @@ private:
 
 		for(int i = 0, now = head;i<10 && now < tail;i++, now++) {
 			std::string cand_word(chewing_cand_string_by_index_static(state -> getChewing(), now));
-			//FCITX_INFO() << "total: "<<chewing_cand_TotalChoice(state -> getChewing());
-			//FCITX_INFO() << "generating: "<<head<<','<<tail<<','<<now_page<<','<<now<<','<<i<<','<<cand_word;
             candidates_[i] = std::make_unique<IntelChewingCandidateWord>(engine_, cand_word, i);
 			size_ = i+1;
         }
@@ -352,6 +350,7 @@ void IntelChewingState::updateUI() {
     inputPanel.reset();
 	FCITX_INFO() << "bopomofo_eng_ = " << bopomofo_eng_ << ", " << bopomofo_eng_.size();
 	FCITX_INFO() << "is it English = " << iThinkItIsEnglish();
+	FCITX_INFO() << "current language = " << current_language_ << "; to_eng_handled_ = " << to_eng_handled_;
 	if (iThinkItIsEnglish()) current_language_ = 0;
 	if (current_language_ == 0 && !to_eng_handled_) {
 		to_eng_handled_ = true;

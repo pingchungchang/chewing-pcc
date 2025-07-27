@@ -49,6 +49,8 @@ public:
     void reset() {
 		chewing_Reset(chewing_ctx);
 		chewing_set_ChiEngMode(chewing_ctx, 1);
+		current_language_ = 1;
+		to_eng_handled_ = 0;
         updateUI();
     }
 	void setCandidateCursor(int index) { candidate_cursor_ = index; }
