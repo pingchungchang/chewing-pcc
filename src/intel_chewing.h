@@ -27,8 +27,8 @@
 #include <fcitx-config/rawconfig.h>
 
 namespace IntelChewingConfigs {
-	bool ShowEnglishInsteadOfBopomofo = true;
-	int ErrorCount = 0;
+	bool ShowEnglishInsteadOfBopomofo = true; // instead of showing bopomofo, it will show the English you typed
+	int ErrorCount = 0; // if you make more than ErrorCount mistakes when typing Chinese, then the engine will assume that you are actually typing English
 }
 
 class IntelChewingEngine;
