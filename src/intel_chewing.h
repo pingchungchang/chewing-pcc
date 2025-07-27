@@ -42,8 +42,8 @@ public:
 	}
 
     void handleEvent(fcitx::KeyEvent &keyEvent);
-    void handleKeyEvent(fcitx::KeyEvent &keyEvent);
-	void handleCandidateEvent(fcitx::KeyEvent& keyEvent);
+    bool handleKeyEvent(fcitx::KeyEvent &keyEvent);
+	bool handleCandidateEvent(fcitx::KeyEvent& keyEvent);
 	ChewingContext* getChewing() { return chewing_ctx; }
     void updateUI();
     void reset() {

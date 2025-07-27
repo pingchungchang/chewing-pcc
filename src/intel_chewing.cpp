@@ -185,13 +185,13 @@ void IntelChewingState::initChewing() {
 	return;
 }
 
-void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
+bool IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
     if (auto candidateList = ic_->inputPanel().candidateList()) {
         int idx = event.key().keyListIndex(selectionKeys);
         if (idx >= 0 && idx < candidateList->size()) {
             event.accept();
             candidateList->candidate(idx).select(ic_);
-            return;
+            return true;
         }
         if (event.key().checkKeyList(
                 engine_->instance()->globalConfig().defaultPrevPage())) {
@@ -202,7 +202,8 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
                 ic_->updateUserInterface(
                     fcitx::UserInterfaceComponent::InputPanel);
             }
-            return event.filterAndAccept();
+            event.filterAndAccept();
+			return true;
         }
         if (event.key().checkKeyList(
                 engine_->instance()->globalConfig().defaultNextPage())) {
@@ -212,7 +213,8 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
                 ic_->updateUserInterface(
                     fcitx::UserInterfaceComponent::InputPanel);
             }
-            return event.filterAndAccept();
+            event.filterAndAccept();
+			return true;
         }
 		if (event.key().checkKeyList(
                 engine_->instance()->globalConfig().defaultPrevCandidate())
@@ -223,7 +225,8 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
                 ic_->updateUserInterface(
                     fcitx::UserInterfaceComponent::InputPanel);
 			}
-            return event.filterAndAccept();
+            event.filterAndAccept();
+			return true;
 		}
 		if (event.key().checkKeyList(
                 engine_->instance()->globalConfig().defaultNextCandidate())
@@ -234,27 +237,30 @@ void IntelChewingState::handleCandidateEvent(fcitx::KeyEvent &event) {
                 ic_->updateUserInterface(
                     fcitx::UserInterfaceComponent::InputPanel);
 			}
-            return event.filterAndAccept();
+            event.filterAndAccept();
+			return true;
 		}
 		if (event.key().check(FcitxKey_Return)) {
 			candidateList -> candidate(candidateList -> cursorIndex()).select(ic_);
-			return event.filterAndAccept();
+			event.filterAndAccept();
+			return true;
 		}
 		if (event.key().check(FcitxKey_Escape)) {
-			// TODO
 			chewing_handle_Esc(chewing_ctx);
-			return event.filterAndAccept();
+			event.filterAndAccept();
+			return true;
 		}
     }
 	else {
 		FCITX_INFO() << "warning no candidate list!!";
 	}
-
+	return false;
 }
 
-void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
+bool IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) { // returns true if handled by libchewing
 	candidate_cursor_ = 0;
 	bool reset_language = true;
+	bool handled_by_chewing = true;
 	if (event.key().check(FcitxKey_space)) {
 		chewing_handle_Space(chewing_ctx);
 		if (!bopomofo_eng_.empty()) bopomofo_eng_ += " ";
@@ -283,8 +289,10 @@ void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 		chewing_handle_Up(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Home)) {
 		chewing_handle_Home(chewing_ctx);
+		FCITX_INFO() << "handled home";
 	} else if (event.key().check(FcitxKey_End)) {
 		chewing_handle_End(chewing_ctx);
+		FCITX_INFO() << "handled end";
 	} else if (event.key().check(FcitxKey_Page_Up)) {
 		chewing_handle_PageUp(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Page_Down)) {
@@ -293,10 +301,17 @@ void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 		chewing_handle_Down(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Caps_Lock)) {
 		chewing_handle_Capslock(chewing_ctx);
+	} else if (event.key().check(FcitxKey_Control_L) || event.key().check(FcitxKey_Control_R)) {
+		handled_by_chewing = false;
+	} else if (event.key().check(FcitxKey_Super_L) || event.key().check(FcitxKey_Super_R)) {
+		handled_by_chewing = false;
 	} else if (event.key().isSimple()) {
 		bopomofo_eng_ += event.key().sym();
 		reset_language = false;
 		chewing_handle_Default(chewing_ctx, event.key().sym());
+	}
+	else {
+		handled_by_chewing = false;
 	}
 	if (reset_language) {
 		if (chewing_get_ChiEngMode(chewing_ctx) == 0) {
@@ -305,16 +320,21 @@ void IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) {
 			to_eng_handled_ = false;
 		}
 	}
-	if (chewing_keystroke_CheckIgnore(chewing_ctx)) return;
-	else return event.filterAndAccept();
+	FCITX_INFO() << event.key() << ":" << "key ignored: " << chewing_keystroke_CheckIgnore(chewing_ctx) << "; handled by chewing: " << handled_by_chewing;
+	if (!handled_by_chewing) return false;
+	if(!chewing_keystroke_CheckIgnore(chewing_ctx)) {
+		event.filterAndAccept();
+	}
+	return true;
 }
 
 void IntelChewingState::handleEvent(fcitx::KeyEvent &event) {
 	if (chewing_cand_CheckDone(chewing_ctx)) {
-		handleKeyEvent(event);
+		if (handleKeyEvent(event)) updateUI();
 	}
-	else handleCandidateEvent(event);
-	updateUI();
+	else {
+		if (handleCandidateEvent(event)) updateUI();
+	}
 	return;
 }
 
