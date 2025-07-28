@@ -166,6 +166,19 @@ private:
     int cursor_ = 0;
 };
 
+int chewingOrder(char c) {
+	const static std::array<std::string, 4> orders = {
+		"1qaz2wsxedcrfv5tgbyhn", 
+		"ujm", 
+		"8ik,9ol.0p;/-",
+		" 6347"
+	};
+	for (int i = 0;i<4;i++) {
+		if (orders[i].find(c) < orders[i].size()) return i;
+	}
+	return -1;
+}
+
 } // namespace
   //
 void IntelChewingState::initChewing() {
@@ -336,8 +349,17 @@ void IntelChewingState::handleEvent(fcitx::KeyEvent &event) {
 
 bool IntelChewingState::iThinkItIsEnglish() {
 	if (bopomofo_eng_.empty()) return false;
+	if (IntelChewingConfigs::EnableStrictOrdering
+			&& bopomofo_eng_.size() >= 2 
+			&& chewingOrder(bopomofo_eng_.end()[-2]) 
+				> chewingOrder(bopomofo_eng_.end()[-1])) return true;
 	if (chewing_bopomofo_Check(chewing_ctx) 
-			&& bopomofo_eng_.size() >= fcitx::utf8::length(std::string(chewing_bopomofo_String_static(chewing_ctx))) + IntelChewingConfigs::ErrorCount + 1) return true;
+			&& bopomofo_eng_.size() 
+				>= fcitx::utf8::length(std::string(
+					chewing_bopomofo_String_static(chewing_ctx)))
+					+ IntelChewingConfigs::ErrorCount + 1) {
+		return true;
+	}
 	if (prev_buffer_ == std::string(chewing_buffer_String_static(chewing_ctx)) && 
 			!chewing_bopomofo_Check(chewing_ctx)) return true;
 	return false;
