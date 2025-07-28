@@ -287,10 +287,8 @@ bool IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) { // returns true
 		chewing_handle_Up(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Home)) {
 		chewing_handle_Home(chewing_ctx);
-		FCITX_INFO() << "handled home";
 	} else if (event.key().check(FcitxKey_End)) {
 		chewing_handle_End(chewing_ctx);
-		FCITX_INFO() << "handled end";
 	} else if (event.key().check(FcitxKey_Page_Up)) {
 		chewing_handle_PageUp(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Page_Down)) {
