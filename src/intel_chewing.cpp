@@ -15,7 +15,7 @@
 namespace {
 
 const int SEL_KEYS[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
-const char* CHEWING_DATA_DIR = "/usr/share/libchewing";
+// const char* CHEWING_DATA_DIR = "/usr/share/libchewing";
 const char* USER_HOME = getenv("HOME");
 std::string user_data_dir = std::string(USER_HOME) + "/.local/share/chewing.sqlite3";
 // Template to help resolve iconv parameter issue on BSD.

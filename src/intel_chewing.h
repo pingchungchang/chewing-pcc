@@ -27,8 +27,8 @@
 #include <fcitx-config/rawconfig.h>
 
 namespace IntelChewingConfigs {
-	bool EnableStrictOrdering = true; // if set to true, the any unordered typing (e.g. ㄠㄋ) will be considered as English syntax
-	bool ShowEnglishInsteadOfBopomofo = true; // instead of showing bopomofo, it will show the English you typed
+	bool EnableStrictOrdering = false; // if set to true, the any unordered typing (e.g. ㄠㄋ) will be considered as English syntax
+	bool ShowEnglishInsteadOfBopomofo = false; // instead of showing bopomofo, it will show the English you typed
 	int ErrorCount = 0; // if you make more than ErrorCount mistakes when typing Chinese, then the engine will assume that you are actually typing English
 }
 

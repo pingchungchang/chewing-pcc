@@ -1,5 +1,7 @@
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(CHEWING REQUIRED chewing)
+pkg_get_variable(CHEWING_DATA_DIR chewing datadir)
+message(STATUS "LibChewing data dir is: ${CHEWING_DATA_DIR}")
 include_directories(${CHEWING_INCLUDE_DIRS})
 link_directories(${CHEWING_LIBRARY_DIRS})
 add_definitions(${CHEWING_CFLAGS_OTHER})
@@ -7,6 +9,7 @@ add_definitions(${CHEWING_CFLAGS_OTHER})
 # Make sure it produce intel_chewing.so instead of libintel_chewing.so
 add_library(intel_chewing SHARED intel_chewing.cpp)
 target_link_libraries(intel_chewing PRIVATE Fcitx5::Core ${CHEWING_LIBRARIES})
+target_compile_definitions(intel_chewing PRIVATE -DCHEWING_DATA_DIR="${CHEWING_DATA_DIR}")
 install(TARGETS intel_chewing DESTINATION "${FCITX_INSTALL_LIBDIR}/fcitx5")
 # Addon config file
 # We need additional layer of conversion because we want PROJECT_VERSION in it.
