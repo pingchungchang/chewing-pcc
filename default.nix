@@ -11,4 +11,9 @@ stdenv.mkDerivation {
 		"-DFCITX_INSTALL_LIBDIR=${placeholder "out"}/lib/fcitx5"
 		"-DFCITX_INSTALL_PKGDIR=${placeholder "out"}/share/fcitx5"
 	];
+	propagatedBuildInputs = [
+		fcitx5-chinese-addons
+		fcitx5-table-extra
+		libchewing
+	];
 }
