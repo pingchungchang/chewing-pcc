@@ -1,6 +1,4 @@
 { lib, stdenv, cmake, fcitx5, qt6Packages, gettext, libchewing, fcitx5-table-extra, pkg-config, src
-  # 確保所有外部依賴都被明確地列在函式簽名中
-  # ... 你可能有的其他依賴，例如 libime, qtbase 等
 }:
 stdenv.mkDerivation {
 	name = "env";
