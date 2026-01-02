@@ -28,8 +28,8 @@
 
 namespace IntelChewingConfigs {
 	bool EnableStrictOrdering = false; // if set to true, the any unordered typing (e.g. ㄠㄋ) will be considered as English syntax
-	bool ShowEnglishInsteadOfBopomofo = false; // instead of showing bopomofo, it will show the English you typed
-	int ErrorCount = 0; // if you make more than ErrorCount mistakes when typing Chinese, then the engine will assume that you are actually typing English
+	bool ShowEnglishInsteadOfBopomofo = true; // instead of showing bopomofo, it will show the English you typed
+	int ErrorCount = 0; // if you make more than ErrorCount mistakes when typing Chinese, then the engine will assume that you are actually typing English 0 mean any mistake will be considered English
 }
 
 class IntelChewingEngine;
@@ -37,23 +37,14 @@ class IntelChewingEngine;
 class IntelChewingState : public fcitx::InputContextProperty {
 public:
 	void initChewing();
-    IntelChewingState(IntelChewingEngine *engine, fcitx::InputContext *ic)
-        : engine_(engine), ic_(ic) {
-			initChewing();
-	}
+    IntelChewingState(IntelChewingEngine *engine, fcitx::InputContext *ic);
 
     void handleEvent(fcitx::KeyEvent &keyEvent);
     bool handleKeyEvent(fcitx::KeyEvent &keyEvent);
 	bool handleCandidateEvent(fcitx::KeyEvent& keyEvent);
 	ChewingContext* getChewing() { return chewing_ctx; }
     void updateUI();
-    void reset() {
-		chewing_Reset(chewing_ctx);
-		chewing_set_ChiEngMode(chewing_ctx, 1);
-		current_language_ = 1;
-		to_eng_handled_ = 0;
-        updateUI();
-    }
+	void reset();
 	void setCandidateCursor(int index) { candidate_cursor_ = index; }
 	int getCandidateCursor() { return candidate_cursor_; }
 	~IntelChewingState() {
