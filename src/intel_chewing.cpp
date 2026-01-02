@@ -492,4 +492,11 @@ IntelChewingState::IntelChewingState(IntelChewingEngine *engine, fcitx::InputCon
 	to_eng_handled_ = false;
 }
 
+void IntelChewingEngine::populateConfig() {
+	IntelChewingConfigs::EnableStrictOrdering = *config_.EnableStrictOrdering;
+	IntelChewingConfigs::ShowEnglishInsteadOfBopomofo = *config_.ShowEnglishInsteadOfBopomofo;
+	IntelChewingConfigs::ErrorCount = *config_.ErrorCount;
+
+}
+
 FCITX_ADDON_FACTORY(IntelChewingEngineFactory);
