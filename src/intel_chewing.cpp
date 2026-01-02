@@ -14,6 +14,11 @@
 
 namespace {
 
+enum LANG {
+	ENG,
+	CHW
+};
+
 const int SEL_KEYS[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
 // const char* CHEWING_DATA_DIR = "/usr/share/libchewing";
 const char* USER_HOME = getenv("HOME");
@@ -191,8 +196,6 @@ void IntelChewingState::initChewing() {
 	chewing_set_maxChiSymbolLen(chewing_ctx, 10);
 	chewing_set_candPerPage(chewing_ctx, 10);
 	chewing_set_ChiEngMode(chewing_ctx, 1);
-	current_language_ = 1;
-	to_eng_handled_ = false;
 	return;
 }
 
@@ -274,6 +277,9 @@ bool IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) { // returns true
 	bool handled_by_chewing = true;
 	if (event.key().check(FcitxKey_space)) {
 		chewing_handle_Space(chewing_ctx);
+		chewing_set_ChiEngMode(chewing_ctx, 1);
+		to_eng_handled_ = false;
+		current_language_ = LANG::CHW;
 		if (!bopomofo_eng_.empty()) bopomofo_eng_ += " ";
 	} else if (event.key().check(FcitxKey_Escape)) {
 		chewing_handle_Esc(chewing_ctx);
@@ -285,7 +291,7 @@ bool IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) { // returns true
 		chewing_handle_Backspace(chewing_ctx);
 		if (!bopomofo_eng_.empty()) bopomofo_eng_.pop_back();
 	} else if (event.key().check(FcitxKey_Tab)) {
-		current_language_ = 0;
+		current_language_ = LANG::ENG;
 		reset_language = false;
 		chewing_handle_Tab(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Shift_L)) {
@@ -325,7 +331,7 @@ bool IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) { // returns true
 	if (reset_language) {
 		if (chewing_get_ChiEngMode(chewing_ctx) == 0) {
 			chewing_set_ChiEngMode(chewing_ctx, 1);
-			current_language_ = 1;
+			current_language_ = LANG::CHW;
 			to_eng_handled_ = false;
 		}
 	}
@@ -355,9 +361,9 @@ bool IntelChewingState::iThinkItIsEnglish() {
 				> chewingOrder(bopomofo_eng_.end()[-1])) return true;
 	if (chewing_bopomofo_Check(chewing_ctx) 
 			&& bopomofo_eng_.size() 
-				>= fcitx::utf8::length(std::string(
+				> fcitx::utf8::length(std::string(
 					chewing_bopomofo_String_static(chewing_ctx)))
-					+ IntelChewingConfigs::ErrorCount + 1) {
+					+ IntelChewingConfigs::ErrorCount) {
 		return true;
 	}
 	if (prev_buffer_ == std::string(chewing_buffer_String_static(chewing_ctx)) && 
@@ -371,18 +377,21 @@ void IntelChewingState::updateUI() {
 	FCITX_INFO() << "bopomofo_eng_ = " << bopomofo_eng_ << ", " << bopomofo_eng_.size();
 	FCITX_INFO() << "is it English = " << iThinkItIsEnglish();
 	FCITX_INFO() << "current language = " << current_language_ << "; to_eng_handled_ = " << to_eng_handled_;
-	if (iThinkItIsEnglish()) current_language_ = 0;
-	if (current_language_ == 0 && !to_eng_handled_) {
+	if (iThinkItIsEnglish()) current_language_ = LANG::ENG;
+	// handle language change, 
+	// commits all characters since english doesn't have a buffer
+	if (current_language_ == LANG::ENG && !to_eng_handled_) {
 		to_eng_handled_ = true;
 		bool clear_bopomofo = false;
 		if (chewing_bopomofo_Check(chewing_ctx)) clear_bopomofo = true;
 		chewing_clean_bopomofo_buf(chewing_ctx);
 		FCITX_INFO() << "bopomofo check: " << chewing_bopomofo_Check(chewing_ctx);
 		chewing_set_ChiEngMode(chewing_ctx, 0);
+		// force fix for cheiwng state
 		if (clear_bopomofo) {
 			chewing_handle_Backspace(chewing_ctx);
 		}
-		FCITX_INFO() << "setting to mode 0";
+		FCITX_INFO() << "setting to ENG";
 		for(auto &i: bopomofo_eng_) {
 			chewing_handle_Default(chewing_ctx, i);
 			if (chewing_commit_Check(chewing_ctx)) {
@@ -390,11 +399,6 @@ void IntelChewingState::updateUI() {
 				FCITX_INFO() << "commiting: "<<commit_string;
 				ic_->commitString(commit_string);
 			}
-		}
-		if (!bopomofo_eng_.empty() && bopomofo_eng_.back() == ' ') {
-			chewing_set_ChiEngMode(chewing_ctx, 1);
-			current_language_ = 1;
-			to_eng_handled_ = false;
 		}
 		bopomofo_eng_.clear();
 	}
@@ -417,6 +421,7 @@ void IntelChewingState::updateUI() {
 	}
 	std::string buffer_string(chewing_buffer_String_static(chewing_ctx));
 	FCITX_INFO() << "buffer string = \"" << buffer_string << "\"";
+	// calculates current cursor
 	int buffer_cursor = chewing_cursor_Current(chewing_ctx);
 	int preedit_cursor = fcitx::utf8::nextNChar(buffer_string.begin(), buffer_cursor) - buffer_string.begin();
 	std::string bopomofo_string;
@@ -472,5 +477,26 @@ void IntelChewingEngine::reset(const fcitx::InputMethodEntry &,
     state->reset();
 }
 
-FCITX_ADDON_FACTORY(IntelChewingEngineFactory);
+void IntelChewingState::reset() {
+	chewing_Reset(chewing_ctx);
+	chewing_set_ChiEngMode(chewing_ctx, 1);
+	current_language_ = LANG::CHW;
+	to_eng_handled_ = 0;
+	updateUI();
+}
 
+IntelChewingState::IntelChewingState(IntelChewingEngine *engine, fcitx::InputContext *ic)
+        : engine_(engine), ic_(ic) {
+	initChewing();
+	current_language_ = LANG::CHW;
+	to_eng_handled_ = false;
+}
+
+void IntelChewingEngine::populateConfig() {
+	IntelChewingConfigs::EnableStrictOrdering = *config_.EnableStrictOrdering;
+	IntelChewingConfigs::ShowEnglishInsteadOfBopomofo = *config_.ShowEnglishInsteadOfBopomofo;
+	IntelChewingConfigs::ErrorCount = *config_.ErrorCount;
+
+}
+
+FCITX_ADDON_FACTORY(IntelChewingEngineFactory);

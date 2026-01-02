@@ -8,9 +8,14 @@ OnDemand=True
 Configurable=True
 
 [Addon/Dependencies]
-0=punctuation
 
 [Addon/OptionalDependencies]
 0=fullwidth
 1=quickphrase
 2=chttrans
+3=punctuation
+
+[ShowSingleWord]
+Type=Boolean
+DefaultValue=False
+Description=Show single word

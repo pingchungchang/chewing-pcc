@@ -7,6 +7,11 @@
 #ifndef _FCITX5_INTEL_CHEWING_INTEL_CHEWING_H_
 #define _FCITX5_INTEL_CHEWING_INTEL_CHEWING_H_
 
+#include <fcitx-config/configuration.h>
+#include <fcitx-config/enum.h>
+#include <fcitx-config/iniparser.h>
+#include <fcitx-config/option.h>
+#include <fcitx-config/rawconfig.h>
 #include <fcitx-utils/inputbuffer.h>
 #include <fcitx/addonfactory.h>
 #include <fcitx/addonmanager.h>
@@ -28,8 +33,34 @@
 
 namespace IntelChewingConfigs {
 	bool EnableStrictOrdering = false; // if set to true, the any unordered typing (e.g. ㄠㄋ) will be considered as English syntax
-	bool ShowEnglishInsteadOfBopomofo = false; // instead of showing bopomofo, it will show the English you typed
-	int ErrorCount = 0; // if you make more than ErrorCount mistakes when typing Chinese, then the engine will assume that you are actually typing English
+	bool ShowEnglishInsteadOfBopomofo = true; // instead of showing bopomofo, it will show the English you typed
+	int ErrorCount = 0; // if you make more than ErrorCount mistakes when typing Chinese, then the engine will assume that you are actually typing English 0 mean any mistake will be considered English
+}
+
+namespace fcitx {
+
+	FCITX_CONFIGURATION(
+		IntelChewingConfig,
+		Option<bool> EnableStrictOrdering {
+			this,
+			"EnableStrictOrdering",
+			_("Enable Strict Ordering"),
+			IntelChewingConfigs::EnableStrictOrdering
+		};
+		Option<bool> ShowEnglishInsteadOfBopomofo {
+			this,
+			"ShowEnglishInsteadOfBopomofo",
+			_("Show English Instead of Bopomofo"),
+			IntelChewingConfigs::ShowEnglishInsteadOfBopomofo
+		};
+		Option<int> ErrorCount {
+			this,
+			"ErrorCount",
+			_("Number of Errors in Chewing Before Switching to English"),
+			IntelChewingConfigs::ErrorCount
+		};
+	)
+
 }
 
 class IntelChewingEngine;
@@ -37,23 +68,14 @@ class IntelChewingEngine;
 class IntelChewingState : public fcitx::InputContextProperty {
 public:
 	void initChewing();
-    IntelChewingState(IntelChewingEngine *engine, fcitx::InputContext *ic)
-        : engine_(engine), ic_(ic) {
-			initChewing();
-	}
+    IntelChewingState(IntelChewingEngine *engine, fcitx::InputContext *ic);
 
     void handleEvent(fcitx::KeyEvent &keyEvent);
     bool handleKeyEvent(fcitx::KeyEvent &keyEvent);
 	bool handleCandidateEvent(fcitx::KeyEvent& keyEvent);
 	ChewingContext* getChewing() { return chewing_ctx; }
     void updateUI();
-    void reset() {
-		chewing_Reset(chewing_ctx);
-		chewing_set_ChiEngMode(chewing_ctx, 1);
-		current_language_ = 1;
-		to_eng_handled_ = 0;
-        updateUI();
-    }
+	void reset();
 	void setCandidateCursor(int index) { candidate_cursor_ = index; }
 	int getCandidateCursor() { return candidate_cursor_; }
 	~IntelChewingState() {
@@ -83,11 +105,23 @@ public:
 
     void reset(const fcitx::InputMethodEntry &,
                fcitx::InputContextEvent &event) override;
+	void populateConfig();
 
-    auto factory() const { return &factory_; }
-    auto instance() const { return instance_; }
+	const fcitx::IntelChewingConfig &config() { return config_; }
+	auto factory() const { return &factory_; }
+	auto instance() const { return instance_; }
+	const fcitx::Configuration *getConfig() const override { 
+		return &config_; 
+	}
+	void setConfig(const fcitx::RawConfig &config) override {
+		config_.load(config, true);
+		populateConfig();
+		fcitx::safeSaveAsIni(config_, "conf/chewing.conf");
+	}
+
 
 private:
+	fcitx::IntelChewingConfig config_;
     fcitx::Instance *instance_;
     fcitx::FactoryFor<IntelChewingState> factory_;
 };

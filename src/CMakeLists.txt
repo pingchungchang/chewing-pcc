@@ -20,3 +20,4 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/intel_chewing-addon.conf" RENAME inte
 # Input Method registration file
 fcitx5_translate_desktop_file(intel_chewing.conf.in intel_chewing.conf)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/intel_chewing.conf" DESTINATION "${FCITX_INSTALL_PKGDATADIR}/inputmethod")
+
