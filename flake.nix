@@ -7,17 +7,17 @@
 
 	outputs = { self, nixpkgs }:
 
-		let
+	let
 		system = "x86_64-linux";
-	pkgs = import nixpkgs {
-		inherit system;
-		config.allowUnfree = true;
-	};
+		pkgs = import nixpkgs {
+			inherit system;
+			config.allowUnfree = true;
+		};
 	in
 	{
 		devShells.${system}.default = pkgs.mkShell {
 			packages = with pkgs; [
-				fcitx5
+					fcitx5
 					qt6Packages.fcitx5-configtool
 					fcitx5
 					qt6Packages.fcitx5-configtool
@@ -32,8 +32,7 @@
 			];
 			shellHook = ''
 				export FCITX_ADDON_DIRS="$PWD/build/lib:$FCITX_ADDON_DIRS"
-				alias chewing-install='./install.sh;'
-			'';
+				'';
 
 		};
 	};
