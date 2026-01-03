@@ -456,7 +456,8 @@ IntelChewingEngine::IntelChewingEngine(fcitx::Instance *instance)
     : instance_(instance), factory_([this](fcitx::InputContext &ic) {
           return new IntelChewingState(this, &ic);
       }) {
-    instance->inputContextManager().registerProperty("intelChewingState", &factory_);
+	reloadConfig();
+    instance_->inputContextManager().registerProperty("intelChewingState", &factory_);
 }
 
 void IntelChewingEngine::keyEvent(const fcitx::InputMethodEntry &entry,
@@ -496,7 +497,6 @@ void IntelChewingEngine::populateConfig() {
 	IntelChewingConfigs::EnableStrictOrdering = *config_.EnableStrictOrdering;
 	IntelChewingConfigs::ShowEnglishInsteadOfBopomofo = *config_.ShowEnglishInsteadOfBopomofo;
 	IntelChewingConfigs::ErrorCount = *config_.ErrorCount;
-
 }
 
 FCITX_ADDON_FACTORY(IntelChewingEngineFactory);

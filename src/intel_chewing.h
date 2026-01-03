@@ -110,13 +110,17 @@ public:
 	const fcitx::IntelChewingConfig &config() { return config_; }
 	auto factory() const { return &factory_; }
 	auto instance() const { return instance_; }
+	void reloadConfig() override {
+		readAsIni(config_, "conf/intel_chewing.conf");
+		populateConfig();
+	}
 	const fcitx::Configuration *getConfig() const override { 
 		return &config_; 
 	}
 	void setConfig(const fcitx::RawConfig &config) override {
 		config_.load(config, true);
 		populateConfig();
-		fcitx::safeSaveAsIni(config_, "conf/chewing.conf");
+		fcitx::safeSaveAsIni(config_, "conf/intel_chewing.conf");
 	}
 
 
