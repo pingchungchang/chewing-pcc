@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 clear
 mkdir -p $(pwd)/build && \
 cd $(pwd)/build && \
