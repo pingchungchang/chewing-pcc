@@ -384,14 +384,14 @@ void IntelChewingState::switchFromChwToEng() {
     }
     FCITX_INFO() << "setting to ENG";
     FCITX_INFO() << "bopomofo_eng_ = " << bopomofo_eng_;
+    std::string commit_string = "";
     for(auto &i: bopomofo_eng_) {
         chewing_handle_Default(chewing_ctx, i);
         if (chewing_commit_Check(chewing_ctx)) {
-            std::string commit_string(chewing_commit_String_static(chewing_ctx));
-            FCITX_INFO() << "commiting: "<<commit_string;
-            ic_->commitString(commit_string);
+            commit_string += chewing_commit_String_static(chewing_ctx);
         }
     }
+    if (!commit_string.empty()) ic_->commitString(commit_string);
     bopomofo_eng_.clear();
 }
 
