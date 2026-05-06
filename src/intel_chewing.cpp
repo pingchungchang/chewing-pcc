@@ -278,7 +278,6 @@ bool IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) { // returns true
 	if (event.key().check(FcitxKey_space)) {
 		chewing_handle_Space(chewing_ctx);
 		chewing_set_ChiEngMode(chewing_ctx, 1);
-		to_eng_handled_ = false;
 		current_language_ = LANG::CHW;
 		if (!bopomofo_eng_.empty()) bopomofo_eng_ += " ";
 	} else if (event.key().check(FcitxKey_Escape)) {
@@ -291,8 +290,8 @@ bool IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) { // returns true
 		chewing_handle_Backspace(chewing_ctx);
 		if (!bopomofo_eng_.empty()) bopomofo_eng_.pop_back();
 	} else if (event.key().check(FcitxKey_Tab)) {
-		current_language_ = LANG::ENG;
 		reset_language = false;
+        switchFromChwToEng();
 		chewing_handle_Tab(chewing_ctx);
 	} else if (event.key().check(FcitxKey_Shift_L)) {
 		chewing_handle_ShiftLeft (chewing_ctx);
@@ -332,7 +331,6 @@ bool IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) { // returns true
 		if (chewing_get_ChiEngMode(chewing_ctx) == 0) {
 			chewing_set_ChiEngMode(chewing_ctx, 1);
 			current_language_ = LANG::CHW;
-			to_eng_handled_ = false;
 		}
 	}
 	FCITX_INFO() << event.key() << ":" << "key ignored: " << chewing_keystroke_CheckIgnore(chewing_ctx) << "; handled by chewing: " << handled_by_chewing;
@@ -371,36 +369,42 @@ bool IntelChewingState::iThinkItIsEnglish() {
 	return false;
 }
 
+void IntelChewingState::switchFromChwToEng() {
+    if (current_language_ == LANG::ENG) return;
+    current_language_ = LANG::ENG;
+    bool clear_bopomofo = false;
+    if (chewing_bopomofo_Check(chewing_ctx)) clear_bopomofo = true;
+    chewing_clean_bopomofo_buf(chewing_ctx);
+    FCITX_INFO() << "bopomofo check: " << chewing_bopomofo_Check(chewing_ctx);
+    chewing_set_ChiEngMode(chewing_ctx, 0);
+    // force update to english
+    if (clear_bopomofo) {
+        chewing_handle_Space(chewing_ctx);
+        chewing_handle_Backspace(chewing_ctx);
+    }
+    FCITX_INFO() << "setting to ENG";
+    FCITX_INFO() << "bopomofo_eng_ = " << bopomofo_eng_;
+    std::string commit_string = "";
+    for(auto &i: bopomofo_eng_) {
+        chewing_handle_Default(chewing_ctx, i);
+        if (chewing_commit_Check(chewing_ctx)) {
+            commit_string += chewing_commit_String_static(chewing_ctx);
+        }
+    }
+    if (!commit_string.empty()) ic_->commitString(commit_string);
+    bopomofo_eng_.clear();
+}
+
 void IntelChewingState::updateUI() {
     auto &inputPanel = ic_->inputPanel();
     inputPanel.reset();
 	FCITX_INFO() << "bopomofo_eng_ = " << bopomofo_eng_ << ", " << bopomofo_eng_.size();
 	FCITX_INFO() << "is it English = " << iThinkItIsEnglish();
-	FCITX_INFO() << "current language = " << current_language_ << "; to_eng_handled_ = " << to_eng_handled_;
-	if (iThinkItIsEnglish()) current_language_ = LANG::ENG;
+	FCITX_INFO() << "current language = " << current_language_;
 	// handle language change, 
 	// commits all characters since english doesn't have a buffer
-	if (current_language_ == LANG::ENG && !to_eng_handled_) {
-		to_eng_handled_ = true;
-		bool clear_bopomofo = false;
-		if (chewing_bopomofo_Check(chewing_ctx)) clear_bopomofo = true;
-		chewing_clean_bopomofo_buf(chewing_ctx);
-		FCITX_INFO() << "bopomofo check: " << chewing_bopomofo_Check(chewing_ctx);
-		chewing_set_ChiEngMode(chewing_ctx, 0);
-		// force fix for cheiwng state
-		if (clear_bopomofo) {
-			chewing_handle_Backspace(chewing_ctx);
-		}
-		FCITX_INFO() << "setting to ENG";
-		for(auto &i: bopomofo_eng_) {
-			chewing_handle_Default(chewing_ctx, i);
-			if (chewing_commit_Check(chewing_ctx)) {
-				std::string commit_string(chewing_commit_String_static(chewing_ctx));
-				FCITX_INFO() << "commiting: "<<commit_string;
-				ic_->commitString(commit_string);
-			}
-		}
-		bopomofo_eng_.clear();
+	if (iThinkItIsEnglish() && current_language_ == LANG::CHW) {
+        switchFromChwToEng();
 	}
 	else {
 		if (chewing_commit_Check(chewing_ctx)) {
@@ -482,7 +486,6 @@ void IntelChewingState::reset() {
 	chewing_Reset(chewing_ctx);
 	chewing_set_ChiEngMode(chewing_ctx, 1);
 	current_language_ = LANG::CHW;
-	to_eng_handled_ = 0;
 	updateUI();
 }
 
@@ -490,7 +493,6 @@ IntelChewingState::IntelChewingState(IntelChewingEngine *engine, fcitx::InputCon
         : engine_(engine), ic_(ic) {
 	initChewing();
 	current_language_ = LANG::CHW;
-	to_eng_handled_ = false;
 }
 
 void IntelChewingEngine::populateConfig() {

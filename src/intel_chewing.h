@@ -73,6 +73,7 @@ public:
     void handleEvent(fcitx::KeyEvent &keyEvent);
     bool handleKeyEvent(fcitx::KeyEvent &keyEvent);
 	bool handleCandidateEvent(fcitx::KeyEvent& keyEvent);
+    void switchFromChwToEng();
 	ChewingContext* getChewing() { return chewing_ctx; }
     void updateUI();
 	void reset();
@@ -93,7 +94,6 @@ private:
 	std::string bopomofo_eng_;
 	std::string prev_buffer_;
 	int current_language_ = 1;
-	bool to_eng_handled_ = false;
 };
 
 class IntelChewingEngine : public fcitx::InputMethodEngineV2 {
