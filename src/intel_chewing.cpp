@@ -294,7 +294,9 @@ bool IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) { // returns true
         if (current_languages_ == LANG::CHW) {
             switchFromChwToEng();
         }
-		chewing_handle_Tab(chewing_ctx);
+        else {
+            chewing_handle_Tab(chewing_ctx);
+        }
 	} else if (event.key().check(FcitxKey_Shift_L)) {
 		chewing_handle_ShiftLeft (chewing_ctx);
 	} else if (event.key().check(FcitxKey_Left)) {
