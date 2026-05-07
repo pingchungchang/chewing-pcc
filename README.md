@@ -35,3 +35,12 @@ fcitx5-chinese-addons
 fcitx5-table-extra
 libchewing
 pkgconfig
+
+# Usage
+The input method switches between Chewing and English. First, it assumes the user is typing Chinese via chewing. After a number of mistakes, which are keypresses that are simple but do not change the length of the bopomofo buffer (e.g. pressing ㄇ after pressing ㄆ, which changes the bopomofo buffer from "ㄆ" into "ㄇ", having the same length). Then, after the number of errors, the input method considers the user to be typing English, hence clears the bopomofo buffer, changes the mode into English, and enters all words typed in the bopomofo buffer in English. 
+
+For example, consider typeing "ㄆㄇㄈ" ，which the bopomofo buffer lenght always 1, if the configuration is allowing 0 errors, then after typing "ㄇ", the buffer is cleared and "qa" is typed (or being sent to the preedit buffer, depending on whether there are other uncommited words in front of it).
+
+Besides using default language changing methods, to change from Chewing to English, press "Tab" once and the language temporary switches from Chewing to English. Due to the implementation, this causes an issue that entering "\t" is this input method requires pressing Tab twice when the preedit buffer is empty.
+
+After an non-simple key press(space, left/right keys etc.), the input method turns back to Chewing mode for users to type Chinese again.
