@@ -73,7 +73,7 @@ public:
     void handleEvent(fcitx::KeyEvent &keyEvent);
     bool handleKeyEvent(fcitx::KeyEvent &keyEvent);
 	bool handleCandidateEvent(fcitx::KeyEvent& keyEvent);
-    void switchFromChwToEng();
+    bool switchFromChwToEng();
 	ChewingContext* getChewing() { return chewing_ctx; }
     void updateUI();
 	void reset();

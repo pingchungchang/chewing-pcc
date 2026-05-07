@@ -291,8 +291,14 @@ bool IntelChewingState::handleKeyEvent(fcitx::KeyEvent &event) { // returns true
 		if (!bopomofo_eng_.empty()) bopomofo_eng_.pop_back();
 	} else if (event.key().check(FcitxKey_Tab)) {
 		reset_language = false;
-        switchFromChwToEng();
-		chewing_handle_Tab(chewing_ctx);
+        if (current_language_ == LANG::CHW) {
+            switchFromChwToEng();
+            event.filterAndAccept();
+            return true;
+        }
+        else {
+            chewing_handle_Tab(chewing_ctx);
+        }
 	} else if (event.key().check(FcitxKey_Shift_L)) {
 		chewing_handle_ShiftLeft (chewing_ctx);
 	} else if (event.key().check(FcitxKey_Left)) {
@@ -369,8 +375,10 @@ bool IntelChewingState::iThinkItIsEnglish() {
 	return false;
 }
 
-void IntelChewingState::switchFromChwToEng() {
-    if (current_language_ == LANG::ENG) return;
+// returns if switched
+bool IntelChewingState::switchFromChwToEng() {
+    if (current_language_ == LANG::ENG) return false;
+    FCITX_INFO() << "switch to eng: ";
     current_language_ = LANG::ENG;
     bool clear_bopomofo = false;
     if (chewing_bopomofo_Check(chewing_ctx)) clear_bopomofo = true;
@@ -391,15 +399,19 @@ void IntelChewingState::switchFromChwToEng() {
             commit_string += chewing_commit_String_static(chewing_ctx);
         }
     }
-    if (!commit_string.empty()) ic_->commitString(commit_string);
+    chewing_handle_Esc(chewing_ctx);
+    if (!commit_string.empty()) {
+        ic_->commitString(commit_string);
+        FCITX_INFO() << "comitting string: " << commit_string;
+    }
     bopomofo_eng_.clear();
+    return true;
 }
 
 void IntelChewingState::updateUI() {
     auto &inputPanel = ic_->inputPanel();
     inputPanel.reset();
 	FCITX_INFO() << "bopomofo_eng_ = " << bopomofo_eng_ << ", " << bopomofo_eng_.size();
-	FCITX_INFO() << "is it English = " << iThinkItIsEnglish();
 	FCITX_INFO() << "current language = " << current_language_;
 	// handle language change, 
 	// commits all characters since english doesn't have a buffer
